@@ -1,0 +1,51 @@
+<?php
+
+Class People
+{
+
+	private $pdo;
+	public function __construct($dbname, $host, $user, $senha)
+	{
+		try{
+			$this->pdo = new PDO("mysql:dbname=".$dbname.";host=".$host,$user,$senha);
+		}
+		catch (PDOException $e) {
+			echo "Erro com banco de dados: ".$e->getMessage();
+			exit();
+		}
+		catch (Exception $e) {
+			echo "Erro: ".$e->getMessage();
+			exit();
+		}
+	}
+
+	public function SearchData()
+	{
+		$res = array();
+		$cmd = $this->pdo->query("SELECT *FROM pessoa ORDER BY id DESC");
+		$res = $cmd->fetchAll(PDO::FETCH_ASSOC);
+		return $res;
+	}
+	//Funcao de cadastrar pessoas no banco de dados
+	public function signpeople($nome, $telefone, $email)
+	{
+		//Antes de Cadastrar Verificar se ja tem o email cadastrado
+		$cmd = $this->pdo->prepare("SELECT id FROM pessoa WHERE email = :e");
+		$cmd->bindValue(":e",$email);
+		$cmd->execute();
+		if($cmd->rowCount() > 0)//email ja cadastrado
+		{
+			return false;
+		}
+		else // não foi cadastrado
+		{
+			$cmd = $this->pdo->prepare("INSERT INTO pessoa (nome, telefone, email) VALUES (:n, :t, :e)");
+			$cmd->bindValue(":n",$nome);
+			$cmd->bindValue(":t",$telefone);
+			$cmd->bindValue(":e",$email);
+			$cmd->execute();
+			return true;
+		}
+	}
+}
+?>
